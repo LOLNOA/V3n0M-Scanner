@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 # This file is part of v3n0m
 # See LICENSE for license details.
+#NEED TO MODULIZE
 import re
 import random
 import threading
