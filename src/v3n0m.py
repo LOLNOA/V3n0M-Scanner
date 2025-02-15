@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # This file is part of v3n0m
 # See LICENSE for license details.
-#NEED TO MODULIZE
 import re
 import random
 import threading
@@ -27,7 +26,7 @@ import requests
 import zipfile
 import concurrent.futures
 from signal import SIGINT, signal
-from modules.sql import sqli_scanning, sqli_testing, Injthread
+from modules.sql import sqli_scanning, Injthread
 import bs4, tqdm
 from glob import glob
 from pathlib import Path
@@ -240,7 +239,28 @@ def killpid():
     os.kill(os.getpid(), 9)
 
 
-#injthread was here
+class Injthread(threading.Thread):
+    def __init__(self, hosts):
+        self.hosts = hosts
+        self.fcount = 0
+        self.check = True
+        threading.Thread.__init__(self)
+
+    def run(self):
+        urls = list(self.hosts)
+        for url in urls:
+            try:
+                if self.check:
+                    sqli_scanning(url, vuln, col, vuln_scan_count, sqli_errors)
+                else:
+                    break
+            except KeyboardInterrupt:
+                pass
+        self.fcount += 1
+
+    def stop(self):
+        self.check = False
+
 
 class xssthread(threading.Thread):
     def __init__(self, hosts):
@@ -649,7 +669,7 @@ def scan_option():
     if chce == "1":
         os.system("clear")
         vuln = []
-        sqli_testing(usearch, numthreads, threads, vuln, col, vuln_scan_count, sqli_errors)
+        sqli_testing()
         scan_count = len(vuln_scan_count)
         scan_count = str(scan_count)
         print(O + "\n" + scan_count + B + " Sites scanned")
@@ -664,7 +684,7 @@ def scan_option():
     elif chce == "2":
         os.system("clear")
         vuln = []
-        sqli_testing(usearch, numthreads, threads, vuln, col, vuln_scan_count, sqli_errors)
+        sqli_testing()
         column_finder()
         print(
             B
@@ -741,7 +761,7 @@ def scan_option():
         print(B + "\n[+] I'm working, please just hang out for a minute...\n")
 
         for url in finallist:
-            sqli_scanning(url, vuln, col, vuln_scan_count, sqli_errors)
+            sqli_scanning(url)
 
         for url in finallist:
             vbulletin5_scanning(url)
@@ -1044,7 +1064,7 @@ def f_menu():
             sqllist = input("Enter list ")
             sqllist = [line.strip() for line in open(sqllist, "r", encoding="utf-8")]
             for url in sqllist:
-                sqli_scanning(url, vuln, col, vuln_scan_count, sqli_errors)
+                sqli_scanning(url)
                 scan_count = len(vuln_scan_count)
                 scan_count = str(scan_count)
             print(scan_count + " Sites scanned ")
