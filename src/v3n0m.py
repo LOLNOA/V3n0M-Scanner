@@ -26,6 +26,7 @@ import requests
 import zipfile
 import concurrent.futures
 from signal import SIGINT, signal
+from modules.sql import sqli_scanning, sqli_testing, Injthread
 import bs4, tqdm
 from glob import glob
 from pathlib import Path
@@ -238,28 +239,7 @@ def killpid():
     os.kill(os.getpid(), 9)
 
 
-class Injthread(threading.Thread):
-    def __init__(self, hosts):
-        self.hosts = hosts
-        self.fcount = 0
-        self.check = True
-        threading.Thread.__init__(self)
-
-    def run(self):
-        urls = list(self.hosts)
-        for url in urls:
-            try:
-                if self.check:
-                    sqli_scanning(url)
-                else:
-                    break
-            except KeyboardInterrupt:
-                pass
-        self.fcount += 1
-
-    def stop(self):
-        self.check = False
-
+#injthread was here
 
 class xssthread(threading.Thread):
     def __init__(self, hosts):
@@ -324,30 +304,7 @@ def xss_testing():
             thread.join()
 
 
-def sqli_scanning(url):
-    vuln_scan_count.append(url)
-    header = [line.strip() for line in open("lists/header", "r", encoding="utf-8")]
-    ua = random.choice(header)
-    headers = {"user-agent": ua}
-    aug_url = url + "'"
-    global sql_list_counter
-    try:
-        r = requests.get(aug_url, timeout=2, headers=headers)
-    except:
-        pass
-    remove_dups = []
-    with open("v3n0m-sqli.txt", "a+", encoding="utf-8") as sqli_log_file:
-        for error in sqli_errors:
-            try:
-                if str(error) in r.text and url not in remove_dups:
-                    remove_dups.append(url)
-                    print(url + " is vulnerable --> %s" % str(error))
-                    sqli_log_file.write("\n" + url)
-                    vuln.append(url)
-                    col.append(url)
-                    sqli_log_file.flush()
-            except:
-                pass
+#sqlscanning was here
 
 
 def life_pulse():  # Don't change this because you will break me.
@@ -357,34 +314,6 @@ def life_pulse():  # Don't change this because you will break me.
     print(life)
 
 
-def sqli_testing():
-    global logfile
-    global pulse
-    global usearch
-    global customlist
-    global sql_list_counter
-    global sql_list_count
-    global sqli_confirmed
-    pulse = datetime.now()
-    vb = len(usearch) / int(numthreads)
-    i = int(vb)
-    m = len(usearch) % int(numthreads)
-    z = 0
-    print(B + "\n[+] I'm working, please just hang out for a minute...\n")
-    try:
-        if len(threads) <= int(numthreads):
-            for x in range(0, int(numthreads)):
-                sliced = usearch[x * i : (x + 1) * i]
-                if z < m:
-                    sliced.append(usearch[int(numthreads) * i + z])
-                    z += 1
-                thread = Injthread(sliced)
-                thread.start()
-                threads.append(thread)
-            for thread in threads:
-                thread.join()
-    except TimeoutError:
-        pass
 
 
 def column_finder():
@@ -719,7 +648,7 @@ def scan_option():
     if chce == "1":
         os.system("clear")
         vuln = []
-        sqli_testing()
+        sqli_testing(usearch, numthreads, threads, vuln, col, vuln_scan_count, sqli_errors)
         scan_count = len(vuln_scan_count)
         scan_count = str(scan_count)
         print(O + "\n" + scan_count + B + " Sites scanned")
@@ -734,7 +663,7 @@ def scan_option():
     elif chce == "2":
         os.system("clear")
         vuln = []
-        sqli_testing()
+        sqli_testing(usearch, numthreads, threads, vuln, col, vuln_scan_count, sqli_errors)
         column_finder()
         print(
             B
@@ -811,7 +740,7 @@ def scan_option():
         print(B + "\n[+] I'm working, please just hang out for a minute...\n")
 
         for url in finallist:
-            sqli_scanning(url)
+            sqli_scanning(url, vuln, col, vuln_scan_count, sqli_errors)
 
         for url in finallist:
             vbulletin5_scanning(url)
@@ -1114,7 +1043,7 @@ def f_menu():
             sqllist = input("Enter list ")
             sqllist = [line.strip() for line in open(sqllist, "r", encoding="utf-8")]
             for url in sqllist:
-                sqli_scanning(url)
+                sqli_scanning(url, vuln, col, vuln_scan_count, sqli_errors)
                 scan_count = len(vuln_scan_count)
                 scan_count = str(scan_count)
             print(scan_count + " Sites scanned ")
