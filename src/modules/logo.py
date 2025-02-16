@@ -1,5 +1,9 @@
 from pathlib import Path
-
+W = "\033[0m"
+R = "\033[31m"
+G = "\033[32m"
+O = "\033[33m"
+B = "\033[34m"
 def cache_Check():
     global cachestatus
     my_file1 = Path("v3n0m-lfi.txt")
